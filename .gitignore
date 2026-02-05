@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+jspm_packages/
+typings/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+.gemini/tmp/
+output/
+
+# Generated files
+.coverage
+batch_results.txt
+tasks.txt.bak
+
+# Caches
+.pytest_cache/
+.ruff_cache/
+
+# Local configs
+specs/
+.claude/

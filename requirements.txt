@@ -1,0 +1,9 @@
+notebooklm-py
+click
+pyyaml
+python-dotenv
+pytest
+pytest-cov
+pytest-mock
+pytest-asyncio
+pydantic
