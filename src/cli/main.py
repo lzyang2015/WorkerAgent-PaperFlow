@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from src.core.config import load_config, get_auth_config
 from src.core.notebook_client import NotebookClient
-from src.utils.file_ops import generate_timestamped_name, save_content, extract_arxiv_id
+from src.utils.file_ops import generate_timestamped_name, save_content, extract_arxiv_id, get_arxiv_title, sanitize_folder_name
 
 # 辅助函数：运行异步协程
 def run_async(coro):
@@ -61,8 +61,18 @@ def cli(url, profile, keep_source, config):
         # 如果无法提取 ID，使用 'unknown'
         arxiv_id = "unknown"
 
-    # 定义输出目录: {cfg.output_dir}/{arxiv_id}/
-    output_dir = Path(cfg.output_dir) / arxiv_id
+    # 定义输出目录: {cfg.output_dir}/{论文标题} ({arxiv_id})/
+    if arxiv_id and arxiv_id != "unknown":
+        try:
+            title = get_arxiv_title(arxiv_id)
+            click.echo(f"论文标题: {title}")
+            safe_title = sanitize_folder_name(title)
+            output_dir = Path(cfg.output_dir) / f"{safe_title} ({arxiv_id})"
+        except Exception as e:
+            click.echo(f"获取论文标题失败，使用ID作为目录名: {e}")
+            output_dir = Path(cfg.output_dir) / arxiv_id
+    else:
+        output_dir = Path(cfg.output_dir) / arxiv_id
 
     # 定义异步处理流程
     async def process():
@@ -81,7 +91,11 @@ def cli(url, profile, keep_source, config):
             click.echo("正在生成摘要...")
             # 使用配置中的提示词生成摘要
             summary_text = await client.generate_summary(source_id, cfg.summary_prompt)
-            
+
+            # 在摘要开头添加原文链接
+            header = f"[📄 论文原文]({url})\n\n---\n\n"
+            summary_text = header + summary_text
+
             # 保存摘要到 Markdown 文件
             # 路径: {output_dir}/summary_{arxiv_id}_{timestamp}.md
             summary_filename = generate_timestamped_name("summary", ".md", identifier=arxiv_id)

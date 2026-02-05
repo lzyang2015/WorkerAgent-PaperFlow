@@ -1,8 +1,10 @@
 import os
 import re
+import urllib.request
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from datetime import datetime
-from typing import Union, Optional
+from typing import Optional, Union
 
 def extract_arxiv_id(url: str) -> Optional[str]:
     """
@@ -77,3 +79,41 @@ def save_content(file_path: Union[str, Path], content: Union[str, bytes], mode: 
         f.write(content)
         
     return str(path.absolute())
+
+def get_arxiv_title(arxiv_id: str) -> str:
+    """通过 arXiv API 获取论文标题"""
+    url = f"http://export.arxiv.org/api/query?id_list={arxiv_id}"
+    with urllib.request.urlopen(url) as response:
+        data = response.read().decode('utf-8')
+
+    root = ET.fromstring(data)
+    # arXiv API 返回的 XML 使用 Atom 命名空间
+    # 需要找到 entry 下的 title
+    ns = {'atom': 'http://www.w3.org/2005/Atom'}
+    entry = root.find('atom:entry', ns)
+    if entry is not None:
+        title_elem = entry.find('atom:title', ns)
+        if title_elem is not None and title_elem.text:
+            # 标题中可能有换行符，需要清理
+            return ' '.join(title_elem.text.strip().split())
+
+    return "Unknown"
+
+def sanitize_folder_name(name: str) -> str:
+    """清理字符串作为文件夹名称，移除非法字符"""
+    # 移除 Windows/macOS/Linux 非法文件名字符
+    # 包括: \ / : * ? " < > |
+    illegal_chars = r'[\\/:*?"<>|]'
+    name = re.sub(illegal_chars, '', name)
+    # 移除其他可能导致问题的特殊字符
+    # 保留: 字母、数字、中文、空格、括号()[]、连字符-、下划线_、英文句号.
+    name = re.sub(r'[^\w\s\u4e00-\u9fff()\[\].-]', '', name, flags=re.UNICODE)
+    # 去除首尾空格和点
+    name = name.strip().strip('.')
+    # 限制长度（防止文件系统限制）
+    max_length = 100
+    if len(name) > max_length:
+        name = name[:max_length].strip()
+    # 移除多余的连续空格
+    name = re.sub(r'\s+', ' ', name)
+    return name
