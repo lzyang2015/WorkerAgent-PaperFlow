@@ -42,10 +42,13 @@ def cli(url, profile, keep_source, config):
     url = url.strip()
     click.echo(f"正在处理 URL: '{url}'")
 
+    # 保存原始 URL 用于 summary 中的论文链接
+    original_url = url
+
     # 确定是否保留源文件
     # 命令行参数 keep_source 优先级高于配置文件中的 keep_source
     should_keep_source = keep_source or cfg.keep_source
-    
+
     # 2. 尝试从 URL 中提取 ArXiv ID
     # 用于后续生成文件名时作为标识符
     arxiv_id = extract_arxiv_id(url)
@@ -92,8 +95,8 @@ def cli(url, profile, keep_source, config):
             # 使用配置中的提示词生成摘要
             summary_text = await client.generate_summary(source_id, cfg.summary_prompt)
 
-            # 在摘要开头添加原文链接
-            header = f"[📄 论文原文]({url})\n\n---\n\n"
+            # 在摘要开头添加原文链接（使用原始 URL）
+            header = f"[📄 论文原文]({original_url})\n\n---\n\n"
             summary_text = header + summary_text
 
             # 保存摘要到 Markdown 文件

@@ -44,7 +44,9 @@ output/
 # Generated files
 .coverage
 batch_results.txt
+tasks.txt
 tasks.txt.bak
+tasks.txt.tmp
 
 # Caches
 .pytest_cache/
